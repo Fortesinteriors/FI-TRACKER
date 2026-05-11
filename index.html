@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en-GB">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0075)file:///C:/Users/Usuario/Downloads/Fortes_Interiors_Delivery_Tracker_8.html -->
+<html lang="en-GB"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FI Tracker">
 <meta name="theme-color" content="#1C3F5E">
 <title>Fortes Interiors — Delivery Tracker</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="./index_files/xlsx.full.min.js.descarga"></script>
 
 <!-- PWA Manifest inline -->
 <script>
@@ -30,7 +30,7 @@ const manifestData = {
 const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
 const manifestURL = URL.createObjectURL(blob);
 document.write(`<link rel="manifest" href="${manifestURL}">`);
-</script>
+</script><link rel="manifest" href="blob:null/fb9a9c75-2aea-44fa-9102-f0426953f8b8">
 
 <style>
 :root {
@@ -231,26 +231,43 @@ body { font-family:'Segoe UI', system-ui, sans-serif; background:#F4F6F8; displa
 <div class="topbar">
   <div class="logo">
     <svg width="32" height="32" viewBox="0 0 80 80" fill="none">
-      <path d="M40 8C22 8 8 22 8 40C8 52 14 62 24 68L28 72L34 68L30 64C22 60 18 51 18 40C18 28 28 18 40 18C52 18 62 28 62 40C62 51 58 60 50 64L46 68L52 72L56 68C66 62 72 52 72 40C72 22 58 8 40 8Z" fill="rgba(255,255,255,0.9)"/>
-      <circle cx="28" cy="70" r="5" fill="rgba(255,255,255,0.9)"/>
-      <circle cx="52" cy="70" r="5" fill="rgba(255,255,255,0.9)"/>
-      <path d="M33 36C33 32 36 30 40 30C44 30 47 32 47 36C47 38 46 39 44 40L43 44H37L36 40C34 39 33 38 33 36Z" fill="rgba(255,255,255,0.9)"/>
+      <path d="M40 8C22 8 8 22 8 40C8 52 14 62 24 68L28 72L34 68L30 64C22 60 18 51 18 40C18 28 28 18 40 18C52 18 62 28 62 40C62 51 58 60 50 64L46 68L52 72L56 68C66 62 72 52 72 40C72 22 58 8 40 8Z" fill="rgba(255,255,255,0.9)"></path>
+      <circle cx="28" cy="70" r="5" fill="rgba(255,255,255,0.9)"></circle>
+      <circle cx="52" cy="70" r="5" fill="rgba(255,255,255,0.9)"></circle>
+      <path d="M33 36C33 32 36 30 40 30C44 30 47 32 47 36C47 38 46 39 44 40L43 44H37L36 40C34 39 33 38 33 36Z" fill="rgba(255,255,255,0.9)"></path>
     </svg>
     <div>
       <div class="logo-name">Fortes Interiors</div>
       <div class="logo-sub">Delivery Tracker</div>
     </div>
   </div>
-  <div class="role-toggle-desktop" id="roleBarDesktop"></div>
-</div>
+  <div class="role-toggle-desktop" id="roleBarDesktop"><button class="role-btn-d" style="padding: 6px 14px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 6px; font-size: 11px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(28, 63, 94); font-weight: 600; font-family: inherit;">Office</button><button class="role-btn-d" style="padding: 6px 14px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 6px; font-size: 11px; cursor: pointer; background: transparent; color: rgba(255, 255, 255, 0.5); font-family: inherit;">Site</button><button class="role-btn-d" style="padding: 6px 14px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 6px; font-size: 11px; cursor: pointer; background: transparent; color: rgba(255, 255, 255, 0.5); font-family: inherit;">Warehouse</button><button class="role-btn-d" style="padding: 6px 14px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 6px; font-size: 11px; cursor: pointer; background: transparent; color: rgba(255, 255, 255, 0.5); font-family: inherit;">Manage</button></div>
+<div id="syncStatus" style="font-size: 10px; color: rgba(255, 255, 255, 0.6); display: flex; align-items: center; gap: 4px;">✅ Saved</div></div>
 
 <div class="scroll-area">
-  <div class="main" id="main"></div>
+  <div class="main" id="main"><div class="sec">Brand</div><div class="brand-tabs"><button style="padding: 7px 14px; border: 2px solid rgb(18, 40, 64); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(18, 40, 64); color: rgb(255, 255, 255); font-family: inherit; white-space: nowrap; flex-shrink: 0;">ZARA</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">MANGO</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">BERSHKA</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">PULL AND BEAR</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">MASSIMO DUTTI</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">LEFTIES</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">OYSHO</button><button style="padding: 7px 14px; border: 2px solid rgb(221, 221, 221); border-radius: 20px; font-size: 12px; cursor: pointer; background: rgb(255, 255, 255); color: rgb(136, 136, 136); font-family: inherit; white-space: nowrap; flex-shrink: 0;">URBAN REVIVO</button></div><div class="stats-row"><div class="stat t"><div class="stat-label">Total</div><div class="stat-val ny">5</div></div><div class="stat p"><div class="stat-label">Pending</div><div class="stat-val wn">2</div></div><div class="stat r"><div class="stat-label">Received</div><div class="stat-val ok">1</div></div><div class="stat i"><div class="stat-label">Issues</div><div class="stat-val er">1</div></div></div><div class="sec">Site</div><div class="obra-tabs"><button style="padding: 10px 12px; border: 2px solid rgb(18, 40, 64); border-radius: 8px; cursor: pointer; text-align: left; background: rgb(18, 40, 64); font-family: inherit; flex-shrink: 0;"><span style="display:block;font-size:13px;font-weight:600;color:#fff;">Oxford Street, London</span><span style="display:block;font-size:10px;font-family:monospace;color:rgba(255,255,255,0.6);margin-top:2px;">FI.ZAR.26.01</span></button><button style="padding: 10px 12px; border: 2px solid rgb(221, 221, 221); border-radius: 8px; cursor: pointer; text-align: left; background: rgb(255, 255, 255); font-family: inherit; flex-shrink: 0;"><span style="display:block;font-size:13px;font-weight:600;color:#222;">Manchester Arndale</span><span style="display:block;font-size:10px;font-family:monospace;color:#999;margin-top:2px;">FI.ZAR.26.02</span></button></div><div class="top-row"><div style="font-size:13px;"><strong style="color:#1C3F5E">Oxford Street, London</strong><span class="pill" style="margin-left:8px">FI.ZAR.26.01</span><span style="color:#aaa;margin-left:8px;font-size:12px">3 orders</span></div><div style="display:flex;gap:8px;"><button class="btn" onclick="showUpload()">📂 Import</button><button class="btn btn-navy" onclick="showAdd()">+ New</button></div></div><div class="tbl-wrap"><table class="tbl"><colgroup><col style="width:80px"><col style="width:90px"><col style="width:100px"><col><col style="width:80px"><col style="width:85px"><col style="width:65px"><col style="width:80px"></colgroup>
+  <thead><tr><th>Order No.</th><th>Delivery</th><th>Supplier</th><th>Product</th><th>Est. Del.</th><th>Status</th><th>Condition</th><th>Notes</th></tr></thead>
+  <tbody><tr><td class="nw" style="font-weight:600;color:#1C3F5E;">PED-001</td><td class="nw"><span class="db do">📦 Direct to Site</span></td><td class="nw" style="color:#555;">Armstrong Tiles</td><td class="wr">Porcelain floor tiles 60x60</td><td class="nw" style="color:#555;">2026-05-08</td><td class="nw"><select class="sel-c" onchange="updS(&#39;FI.ZAR.26.01::PED-001&#39;,this.value)"><option value="pending" selected="">Pending</option><option value="received">Received</option><option value="partial">Partial</option><option value="issue">Issue</option></select></td><td class="nw"><select class="sel-c" onchange="updC(&#39;FI.ZAR.26.01::PED-001&#39;,this.value)">
+    <option value="" selected="">—</option>
+    <option value="good">Good</option>
+    <option value="damaged">Damaged</option>
+    <option value="missing">Missing</option>
+  </select></td><td class="nw" style="font-size:11px;color:#999;">—</td></tr><tr><td class="nw" style="font-weight:600;color:#1C3F5E;">PED-002</td><td class="nw"><span class="db do">📦 Direct to Site</span></td><td class="nw" style="color:#555;">BrightLED UK</td><td class="wr">Recessed LED panels x40</td><td class="nw" style="color:#555;">2026-05-06</td><td class="nw"><select class="sel-c" onchange="updS(&#39;FI.ZAR.26.01::PED-002&#39;,this.value)"><option value="pending">Pending</option><option value="received" selected="">Received</option><option value="partial">Partial</option><option value="issue">Issue</option></select></td><td class="nw"><select class="sel-c" onchange="updC(&#39;FI.ZAR.26.01::PED-002&#39;,this.value)">
+    <option value="">—</option>
+    <option value="good" selected="">Good</option>
+    <option value="damaged">Damaged</option>
+    <option value="missing">Missing</option>
+  </select></td><td class="nw" style="font-size:11px;color:#999;">Delivered on time</td></tr><tr><td class="nw" style="font-weight:600;color:#1C3F5E;">PED-003</td><td class="nw"><span class="db do">📦 Direct to Site</span></td><td class="nw" style="color:#555;">CurtainPro</td><td class="wr">Fitting room curtains x12</td><td class="nw" style="color:#555;">2026-05-05</td><td class="nw"><select class="sel-c" onchange="updS(&#39;FI.ZAR.26.01::PED-003&#39;,this.value)"><option value="pending">Pending</option><option value="received">Received</option><option value="partial">Partial</option><option value="issue" selected="">Issue</option></select></td><td class="nw"><select class="sel-c" onchange="updC(&#39;FI.ZAR.26.01::PED-003&#39;,this.value)">
+    <option value="">—</option>
+    <option value="good">Good</option>
+    <option value="damaged" selected="">Damaged</option>
+    <option value="missing">Missing</option>
+  </select></td><td class="nw" style="font-size:11px;color:#999;">3 curtains arrived with fabric tears</td></tr></tbody></table></div></div>
 </div>
 
 <!-- Mobile bottom nav -->
 <nav class="bottom-nav">
-  <div class="bnav-inner" id="bnavInner"></div>
+  <div class="bnav-inner" id="bnavInner"><button class="bnav-btn active" data-role="office"><span class="bnav-icon">🏢</span><span>Office</span><span class="bnav-dot"></span></button><button class="bnav-btn" data-role="site"><span class="bnav-icon">🔨</span><span>Site</span><span class="bnav-dot"></span></button><button class="bnav-btn" data-role="warehouse"><span class="bnav-icon">🏭</span><span>Warehouse</span><span class="bnav-dot"></span></button><button class="bnav-btn" data-role="obras"><span class="bnav-icon">⚙️</span><span>Manage</span><span class="bnav-dot"></span></button></div>
 </nav>
 
 <div id="modal"></div>
@@ -736,14 +753,111 @@ function saveOrder(){
 }
 function closeM(e){if(e&&e.target!==e.currentTarget)return;document.getElementById("modal").innerHTML="";}
 
+// ── GOOGLE SHEETS SYNC ────────────────────────────────────────────────────────
+const GS_URL = "https://script.google.com/macros/s/AKfycbzM-g9QnlKZ6lwPNKY3Ebmpi3YTMzA53GuNt7OXvnixfw7uXgsWXLbuTRCnCINApFpq/exec";
+let syncTimeout = null;
+
+// Show sync status in topbar
+function setSyncStatus(state) {
+  let el = document.getElementById("syncStatus");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "syncStatus";
+    el.style.cssText = "font-size:10px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:4px;";
+    document.querySelector(".topbar").appendChild(el);
+  }
+  const states = {
+    loading: "⏳ Loading…",
+    saving:  "💾 Saving…",
+    saved:   "✅ Saved",
+    offline: "📵 Offline",
+    error:   "⚠️ Sync error"
+  };
+  el.textContent = states[state] || "";
+}
+
+// Load data from Google Sheets on startup
+async function loadFromSheets() {
+  setSyncStatus("loading");
+  try {
+    const res = await fetch(GS_URL + "?t=" + Date.now());
+    const text = await res.text();
+    if(text && text !== "{}") {
+      const saved = JSON.parse(text);
+      if(saved.obras && saved.obras.length)  DB.obras  = saved.obras;
+      if(saved.orders && saved.orders.length) DB.orders = saved.orders;
+    }
+    setSyncStatus("saved");
+  } catch(err) {
+    setSyncStatus("offline");
+    console.warn("Could not load from Sheets, using local data:", err);
+  }
+  render();
+}
+
+// Save data to Google Sheets (debounced — waits 1.5s after last change)
+function saveToSheets() {
+  setSyncStatus("saving");
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    try {
+      await fetch(GS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          action: "save",
+          payload: { obras: DB.obras, orders: DB.orders }
+        })
+      });
+      setSyncStatus("saved");
+    } catch(err) {
+      setSyncStatus("error");
+    }
+  }, 1500);
+}
+
+// Hook saveToSheets into all data-changing actions
+const _origUpdS = updS;
+window.updS = function(uid,val){ _origUpdS(uid,val); saveToSheets(); };
+const _origUpdC = updC;
+window.updC = function(uid,val){ _origUpdC(uid,val); saveToSheets(); };
+const _origConfSite = confSite;
+window.confSite = function(uid){ _origConfSite(uid); saveToSheets(); };
+const _origConfWh = confWh;
+window.confWh = function(uid){ _origConfWh(uid); saveToSheets(); };
+const _origSendS = sendS;
+window.sendS = function(uid){ _origSendS(uid); saveToSheets(); };
+const _origSaveOrder = saveOrder;
+window.saveOrder = function(){ _origSaveOrder(); saveToSheets(); };
+const _origSaveNewObra = saveNewObra;
+window.saveNewObra = function(){ _origSaveNewObra(); saveToSheets(); };
+const _origChangeObraStatus = changeObraStatus;
+window.changeObraStatus = function(code,status){ _origChangeObraStatus(code,status); saveToSheets(); };
+const _origDeleteObra = deleteObra;
+window.deleteObra = function(code){ _origDeleteObra(code); saveToSheets(); };
+const _origEditN = editN;
+window.editN = function(uid){
+  const o=DB.orders.find(x=>x.uid===uid); if(!o)return;
+  const n=prompt("Edit notes:",o.notes||"");
+  if(n!==null){ o.notes=n; render(); saveToSheets(); }
+};
+
+// Also save after Excel import
+const _origShowImportResult = showImportResult;
+window.showImportResult = function(added, skipped, errors) {
+  _origShowImportResult(added, skipped, errors);
+  if(added.length) saveToSheets();
+};
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildNav();
-render();
+loadFromSheets(); // Load from Google Sheets first, then render
 
 // Service Worker for offline use
 if('serviceWorker' in navigator){
   const sw=`
-    const CACHE='fi-tracker-v1';
+    const CACHE='fi-tracker-v2';
     const URLS=['${location.href}','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
     self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS).catch(()=>{}))));
     self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('${location.href}')))));
@@ -752,5 +866,6 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
