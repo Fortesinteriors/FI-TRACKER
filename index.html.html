@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FI Tracker">
+<meta name="theme-color" content="#1C3F5E">
+<title>Fortes Interiors — Delivery Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifestData = {
+  name: "Fortes Interiors Delivery Tracker",
+  short_name: "FI Tracker",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#1C3F5E",
+  theme_color: "#1C3F5E",
+  orientation: "portrait",
+  icons: [{
+    src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%231C3F5E'/><path d='M256 60C158 60 78 140 78 238c0 65 35 122 88 154l22 22 34-22-22-22c-46-28-74-78-74-132 0-72 60-130 130-130s130 58 130 130c0 54-28 104-74 132l-22 22 34 22 22-22c53-32 88-89 88-154 0-98-80-178-178-178z' fill='white'/><circle cx='178' cy='400' r='30' fill='white'/><circle cx='334' cy='400' r='30' fill='white'/><path d='M220 230c0-20 16-36 36-36s36 16 36 36c0 12-6 22-16 28l-6 26h-28l-6-26c-10-6-16-16-16-28z' fill='white'/></svg>`),
+    sizes: "512x512",
+    type: "image/svg+xml",
+    purpose: "any maskable"
+  }]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+document.write(`<link rel="manifest" href="${manifestURL}">`);
+</script>
+
+<style>
+:root {
+  --navy: #1C3F5E;
+  --navy-dark: #122840;
+  --navy-mid: #2A5580;
+  --navy-pale: #E8EFF5;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body { font-family:'Segoe UI', system-ui, sans-serif; background:#F4F6F8; display:flex; flex-direction:column; }
+
+/* ── TOPBAR ── */
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; padding-top:calc(12px + env(safe-area-inset-top, 0px));
+  background:var(--navy); flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-name { font-size:16px; font-weight:600; color:#fff; }
+.logo-sub { font-size:8px; color:rgba(255,255,255,0.45); letter-spacing:2px; text-transform:uppercase; margin-top:1px; }
+
+/* Desktop role toggle — hidden on mobile */
+.role-toggle-desktop {
+  display:flex; gap:3px; background:rgba(0,0,0,0.25); border-radius:8px; padding:3px;
+}
+.role-btn-d {
+  padding:6px 14px; border:none; border-radius:6px; font-size:11px;
+  cursor:pointer; background:transparent; color:rgba(255,255,255,0.5); font-family:inherit;
+}
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+.main { padding:16px; max-width:1200px; margin:0 auto; padding-bottom:16px; }
+
+/* ── BOTTOM NAV (mobile only) ── */
+.bottom-nav {
+  display:none;
+  background:var(--navy);
+  border-top:1px solid rgba(255,255,255,0.1);
+  padding-bottom:calc(8px + var(--safe-bottom));
+  flex-shrink:0;
+}
+.bnav-inner { display:flex; }
+.bnav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:10px 4px 6px;
+  border:none; background:transparent; cursor:pointer; font-family:inherit;
+  color:rgba(255,255,255,0.45); font-size:10px; gap:4px;
+  transition:color 0.15s;
+}
+.bnav-btn .bnav-icon { font-size:20px; line-height:1; }
+.bnav-btn.active { color:#FFFFFF; }
+.bnav-btn.active .bnav-dot {
+  display:block; width:4px; height:4px; border-radius:50%;
+  background:#fff; margin:2px auto 0;
+}
+.bnav-dot { display:none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .role-toggle-desktop { display:none; }
+  .bottom-nav { display:flex; flex-direction:column; }
+  .main { padding:12px; padding-bottom:8px; }
+  .topbar { padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top,0px)); }
+}
+@media (min-width: 641px) {
+  .bottom-nav { display:none !important; }
+}
+
+/* ── STATS ── */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+@media (max-width:640px) { .stats-row { grid-template-columns:repeat(2,1fr); gap:8px; } }
+.stat { background:#fff; border-radius:10px; padding:12px 14px; border-left:3px solid #ccc; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+.stat.t{border-left-color:var(--navy);} .stat.p{border-left-color:#D97706;} .stat.r{border-left-color:#059669;} .stat.i{border-left-color:#DC2626;}
+.stat-label { font-size:10px; color:#888; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.stat-val { font-size:26px; font-weight:600; }
+.stat-val.ny{color:var(--navy);} .stat-val.wn{color:#D97706;} .stat-val.ok{color:#059669;} .stat-val.er{color:#DC2626;}
+
+/* ── SEC ── */
+.sec { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1.2px; color:#999; margin-bottom:8px; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x:auto; background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); -webkit-overflow-scrolling:touch; }
+.tbl { width:100%; border-collapse:collapse; font-size:12px; min-width:580px; }
+.tbl th { padding:9px 8px; font-size:10px; font-weight:600; color:#999; border-bottom:1px solid #eee; background:#FAFAFA; white-space:nowrap; text-transform:uppercase; letter-spacing:0.5px; text-align:left; }
+.tbl td { padding:9px 8px; border-bottom:1px solid #F0F0F0; color:#222; vertical-align:middle; }
+.tbl td.nw { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tbl td.wr { white-space:normal; line-height:1.4; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:#F7F9FC; }
+
+/* ── BADGES ── */
+.badge { display:inline-block; padding:3px 7px; border-radius:5px; font-size:10px; font-weight:600; white-space:nowrap; }
+.bp{background:#FEF3C7;color:#92400E;} .br{background:#D1FAE5;color:#065F46;}
+.bi{background:#FEE2E2;color:#991B1B;} .bpa{background:#DBEAFE;color:#1E40AF;}
+.bwh{background:#EDE9FE;color:#5B21B6;} .bst{background:#CFFAFE;color:#155E75;} .bdn{background:#D1FAE5;color:#065F46;}
+.db{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap;}
+.do{background:#EFF6FF;color:var(--navy);} .dw{background:#F5F3FF;color:#5B21B6;}
+
+/* ── BUTTONS ── */
+.btn { padding:8px 14px; border:1px solid #ddd; border-radius:8px; font-size:12px; cursor:pointer; background:#fff; color:#333; font-family:inherit; -webkit-appearance:none; }
+.btn:active { background:#F0F0F0; }
+.btn-navy { background:var(--navy); color:#fff; border-color:var(--navy); }
+.btn-navy:active { background:var(--navy-dark); }
+.btn-purple { background:#6D28D9; color:#fff; border-color:#6D28D9; }
+.btn-teal { background:#0E7490; color:#fff; border-color:#0E7490; }
+.btn-sm { font-size:11px; padding:5px 10px; }
+.btn-danger { background:#FEE2E2; color:#991B1B; border-color:#FECACA; }
+
+/* ── CARDS ── */
+.card { background:#fff; border:1px solid #E8ECF0; border-radius:10px; padding:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+.card.wc { border-left:3px solid #7C3AED; } .card.scc { border-left:3px solid var(--navy); } .card.done { border-left:3px solid #059669; }
+.ct { font-size:14px; font-weight:600; color:#1a1a1a; }
+.cm { font-size:12px; color:#888; margin-top:3px; line-height:1.5; }
+.ca { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid #F0F0F0; align-items:center; }
+@media (max-width:640px) { .ca { flex-direction:column; align-items:stretch; } .ca .btn { width:100%; text-align:center; padding:12px; font-size:14px; } }
+.cg { display:flex; align-items:center; gap:6px; font-size:13px; color:#666; }
+.cg input[type=checkbox] { width:18px; height:18px; accent-color:var(--navy); cursor:pointer; }
+.cg label { cursor:pointer; }
+
+/* ── SELECTS ── */
+.sel-c { font-size:11px; padding:3px 4px; border:1px solid #ddd; border-radius:5px; background:#fff; color:#333; cursor:pointer; width:100%; }
+.sel-std { font-size:13px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; background:#fff; color:#333; cursor:pointer; width:100%; -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+.text-in { flex:1; min-width:100px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:13px; font-family:inherit; width:100%; }
+.text-in:focus, .sel-std:focus, .fi:focus { outline:none; border-color:var(--navy-mid); }
+
+/* ── INFO BOXES ── */
+.ib { background:#EFF6FF; border-left:3px solid var(--navy); border-radius:0 8px 8px 0; padding:10px 14px; font-size:12px; color:var(--navy); margin-bottom:14px; line-height:1.6; }
+.wb { background:#F5F3FF; border-left:3px solid #7C3AED; border-radius:0 8px 8px 0; padding:10px 14px; font-size:12px; color:#5B21B6; margin-bottom:14px; line-height:1.6; }
+.empty { text-align:center; padding:24px; color:#aaa; font-size:14px; background:#fff; border-radius:10px; border:1px dashed #E0E0E0; margin-bottom:10px; }
+
+/* ── PILL ── */
+.pill { font-family:monospace; font-size:11px; color:#2A6496; background:#EFF6FF; padding:2px 6px; border-radius:4px; }
+
+/* ── TABS ── */
+.brand-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.obra-tabs  { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+@media (max-width:640px) {
+  .brand-tabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+  .brand-tabs::-webkit-scrollbar { display:none; }
+  .obra-tabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+  .obra-tabs::-webkit-scrollbar { display:none; }
+}
+
+/* ── MODAL ── */
+.modal-bg { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:flex-end; justify-content:center; z-index:200; }
+@media (min-width:641px) { .modal-bg { align-items:center; } }
+.modal {
+  background:#fff; border-radius:16px 16px 0 0; padding:20px 20px calc(20px + var(--safe-bottom));
+  width:100%; max-width:500px; max-height:92vh; overflow-y:auto;
+  box-shadow:0 -4px 30px rgba(0,0,0,0.15);
+}
+@media (min-width:641px) { .modal { border-radius:12px; padding:24px; } }
+.modal-handle { width:36px; height:4px; background:#ddd; border-radius:2px; margin:0 auto 16px; }
+.modal-title { font-size:16px; font-weight:600; margin-bottom:16px; color:var(--navy); }
+.fg { margin-bottom:12px; } .fl { font-size:12px; color:#666; margin-bottom:5px; display:block; font-weight:500; }
+.fi { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:16px; font-family:inherit; -webkit-appearance:none; }
+.fr { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width:400px) { .fr { grid-template-columns:1fr; } }
+.ma { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+@media (max-width:640px) { .ma { flex-direction:column-reverse; } .ma .btn { padding:14px; font-size:15px; text-align:center; } }
+.dtog { display:flex; gap:8px; margin-top:6px; }
+.dopt { flex:1; padding:14px 8px; border:2px solid #ddd; border-radius:8px; cursor:pointer; text-align:center; font-size:13px; color:#888; font-family:inherit; background:#fff; }
+.dopt.so { background:var(--navy-dark); border-color:var(--navy-dark); color:#fff; }
+.dopt.sw { background:#5B21B6; border-color:#5B21B6; color:#fff; }
+
+/* ── UPLOAD ── */
+.upload-zone { border:2px dashed #CBD5E1; border-radius:10px; padding:28px 16px; text-align:center; cursor:pointer; margin-bottom:14px; }
+.upload-zone:active { background:#F8FAFC; }
+
+/* ── TOP ROW ── */
+.top-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+@media (max-width:640px) { .top-row { flex-direction:column; align-items:stretch; } .top-row > div:last-child { display:flex; gap:8px; } .top-row .btn { flex:1; text-align:center; } }
+
+/* ── SITE MANAGEMENT ── */
+.obras-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; margin-bottom:16px; }
+@media (max-width:640px) { .obras-grid { grid-template-columns:1fr; } }
+.obra-card-g { background:#fff; border:1px solid #E8ECF0; border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:5px; }
+.og-code { font-family:monospace; font-size:13px; font-weight:700; color:var(--navy); }
+.og-site { font-size:14px; font-weight:600; color:#222; }
+.og-meta { font-size:12px; color:#888; }
+.og-actions { display:flex; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid #F0F0F0; }
+.status-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.sp-active{background:#D1FAE5;color:#065F46;} .sp-planned{background:#FEF3C7;color:#92400E;} .sp-closed{background:#F3F4F6;color:#6B7280;}
+.subview-tabs { display:flex; gap:4px; margin-bottom:16px; }
+.sv-tab { flex:1; padding:10px 8px; border:1.5px solid #ddd; border-radius:8px; font-size:13px; cursor:pointer; background:#fff; color:#888; font-family:inherit; text-align:center; }
+.sv-tab.act { background:var(--navy); border-color:var(--navy); color:#fff; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg width="32" height="32" viewBox="0 0 80 80" fill="none">
+      <path d="M40 8C22 8 8 22 8 40C8 52 14 62 24 68L28 72L34 68L30 64C22 60 18 51 18 40C18 28 28 18 40 18C52 18 62 28 62 40C62 51 58 60 50 64L46 68L52 72L56 68C66 62 72 52 72 40C72 22 58 8 40 8Z" fill="rgba(255,255,255,0.9)"/>
+      <circle cx="28" cy="70" r="5" fill="rgba(255,255,255,0.9)"/>
+      <circle cx="52" cy="70" r="5" fill="rgba(255,255,255,0.9)"/>
+      <path d="M33 36C33 32 36 30 40 30C44 30 47 32 47 36C47 38 46 39 44 40L43 44H37L36 40C34 39 33 38 33 36Z" fill="rgba(255,255,255,0.9)"/>
+    </svg>
+    <div>
+      <div class="logo-name">Fortes Interiors</div>
+      <div class="logo-sub">Delivery Tracker</div>
+    </div>
+  </div>
+  <div class="role-toggle-desktop" id="roleBarDesktop"></div>
+</div>
+
+<div class="scroll-area">
+  <div class="main" id="main"></div>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="bottom-nav">
+  <div class="bnav-inner" id="bnavInner"></div>
+</nav>
+
+<div id="modal"></div>
+
+<script>
+const BRANDS=[{id:"ZAR",name:"ZARA"},{id:"MAN",name:"MANGO"},{id:"BSK",name:"BERSHKA"},{id:"PB",name:"PULL AND BEAR"},{id:"MD",name:"MASSIMO DUTTI"},{id:"LFT",name:"LEFTIES"},{id:"OY",name:"OYSHO"},{id:"UR",name:"URBAN REVIVO"}];
+const DB={
+  obras:[
+    {code:"FI.ZAR.26.01",brand:"ZAR",site:"Oxford Street, London",status:"active"},
+    {code:"FI.ZAR.26.02",brand:"ZAR",site:"Manchester Arndale",status:"active"},
+    {code:"FI.MAN.26.01",brand:"MAN",site:"Westfield London",status:"active"},
+    {code:"FI.MAN.26.02",brand:"MAN",site:"Liverpool ONE",status:"planned"},
+    {code:"FI.BSK.26.01",brand:"BSK",site:"Westfield Stratford",status:"active"},
+    {code:"FI.PB.26.01", brand:"PB", site:"Leeds City Centre",status:"active"},
+    {code:"FI.LFT.26.01",brand:"LFT",site:"Cardiff",status:"planned"},
+    {code:"FI.UR.26.01", brand:"UR", site:"Oxford Street, London",status:"active"},
+  ],
+  orders:[
+    {uid:"FI.ZAR.26.01::PED-001",id:"PED-001",obra:"FI.ZAR.26.01",supplier:"Armstrong Tiles",product:"Porcelain floor tiles 60x60",eta:"2026-05-08",dest:"site",status:"pending",whReceived:null,whSent:null,received:null,complete:null,condition:null,notes:""},
+    {uid:"FI.ZAR.26.01::PED-002",id:"PED-002",obra:"FI.ZAR.26.01",supplier:"BrightLED UK",product:"Recessed LED panels x40",eta:"2026-05-06",dest:"site",status:"received",whReceived:null,whSent:null,received:"2026-05-06",complete:true,condition:"good",notes:"Delivered on time"},
+    {uid:"FI.ZAR.26.01::PED-003",id:"PED-003",obra:"FI.ZAR.26.01",supplier:"CurtainPro",product:"Fitting room curtains x12",eta:"2026-05-05",dest:"site",status:"issue",whReceived:null,whSent:null,received:"2026-05-05",complete:false,condition:"damaged",notes:"3 curtains arrived with fabric tears"},
+    {uid:"FI.ZAR.26.02::PED-001",id:"PED-001",obra:"FI.ZAR.26.02",supplier:"SteelFix Ltd",product:"Steel shelving units x20",eta:"2026-05-10",dest:"warehouse",status:"pending",whReceived:null,whSent:null,received:null,complete:null,condition:null,notes:""},
+    {uid:"FI.ZAR.26.02::PED-002",id:"PED-002",obra:"FI.ZAR.26.02",supplier:"Armstrong Tiles",product:"Wall tiles bathroom 120m²",eta:"2026-05-07",dest:"warehouse",status:"warehouse",whReceived:"2026-05-07",whSent:null,received:null,complete:null,condition:null,notes:"60% delivered"},
+    {uid:"FI.MAN.26.01::PED-001",id:"PED-001",obra:"FI.MAN.26.01",supplier:"GlassWorks UK",product:"Glass partitions 3m x2m x6",eta:"2026-05-09",dest:"site",status:"pending",whReceived:null,whSent:null,received:null,complete:null,condition:null,notes:""},
+    {uid:"FI.MAN.26.01::PED-002",id:"PED-002",obra:"FI.MAN.26.01",supplier:"LightSource",product:"Track lighting system",eta:"2026-05-06",dest:"warehouse",status:"sent",whReceived:"2026-05-04",whSent:"2026-05-06",received:null,complete:null,condition:null,notes:""},
+    {uid:"FI.MAN.26.02::PED-001",id:"PED-001",obra:"FI.MAN.26.02",supplier:"FloorMaster",product:"Oak effect flooring 200m²",eta:"2026-05-11",dest:"site",status:"pending",whReceived:null,whSent:null,received:null,complete:null,condition:null,notes:""},
+    {uid:"FI.BSK.26.01::PED-001",id:"PED-001",obra:"FI.BSK.26.01",supplier:"CeilingPro",product:"Suspended ceiling grid kit",eta:"2026-05-08",dest:"warehouse",status:"received",whReceived:"2026-05-05",whSent:"2026-05-07",received:"2026-05-08",complete:true,condition:"good",notes:""},
+    {uid:"FI.PB.26.01::PED-001", id:"PED-001",obra:"FI.PB.26.01", supplier:"BrightLED UK",product:"LED strip lighting 500m",eta:"2026-05-05",dest:"site",status:"received",whReceived:null,whSent:null,received:"2026-05-05",complete:true,condition:"good",notes:""},
+  ]
+};
+
+let role="office", activeBrand="ZAR", activeObra="FI.ZAR.26.01", obrasView="list";
+
+// ── STYLES ────────────────────────────────────────────────────────────────────
+const S={
+  rB:"padding:6px 14px;border:none;border-radius:6px;font-size:11px;cursor:pointer;background:transparent;color:rgba(255,255,255,0.5);font-family:inherit;",
+  rA:"padding:6px 14px;border:none;border-radius:6px;font-size:11px;cursor:pointer;background:#FFFFFF;color:#1C3F5E;font-weight:600;font-family:inherit;",
+  bB:"padding:7px 14px;border:2px solid #ddd;border-radius:20px;font-size:12px;cursor:pointer;background:#fff;color:#888;font-family:inherit;white-space:nowrap;flex-shrink:0;",
+  bA:"padding:7px 14px;border:2px solid #122840;border-radius:20px;font-size:12px;cursor:pointer;background:#122840;color:#FFFFFF;font-family:inherit;white-space:nowrap;flex-shrink:0;",
+  oB:"padding:10px 12px;border:2px solid #ddd;border-radius:8px;cursor:pointer;text-align:left;background:#fff;font-family:inherit;flex-shrink:0;",
+  oA:"padding:10px 12px;border:2px solid #122840;border-radius:8px;cursor:pointer;text-align:left;background:#122840;font-family:inherit;flex-shrink:0;",
+};
+
+const NAV_ITEMS = [
+  {id:"office",    icon:"🏢", label:"Office"},
+  {id:"site",      icon:"🔨", label:"Site"},
+  {id:"warehouse", icon:"🏭", label:"Warehouse"},
+  {id:"obras",     icon:"⚙️", label:"Manage"},
+];
+
+function buildNav(){
+  // Desktop
+  const desk = document.getElementById("roleBarDesktop");
+  NAV_ITEMS.forEach(r=>{
+    const btn=document.createElement("button");
+    btn.textContent=r.label; btn.className="role-btn-d";
+    btn.style.cssText=r.id===role?S.rA:S.rB;
+    btn.addEventListener("click",()=>setRole(r.id));
+    desk.appendChild(btn);
+  });
+  // Mobile bottom nav
+  const mob = document.getElementById("bnavInner");
+  NAV_ITEMS.forEach(r=>{
+    const btn=document.createElement("button");
+    btn.className="bnav-btn"+(r.id===role?" active":"");
+    btn.innerHTML=`<span class="bnav-icon">${r.icon}</span><span>${r.label}</span><span class="bnav-dot"></span>`;
+    btn.addEventListener("click",()=>setRole(r.id));
+    btn.dataset.role=r.id;
+    mob.appendChild(btn);
+  });
+}
+
+function setRole(r){
+  role=r;
+  // Update desktop
+  document.querySelectorAll(".role-btn-d").forEach((b,i)=>{
+    b.style.cssText=NAV_ITEMS[i].id===r?S.rA:S.rB;
+  });
+  // Update mobile
+  document.querySelectorAll(".bnav-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.role===r);
+  });
+  // Scroll to top
+  document.querySelector(".scroll-area").scrollTop=0;
+  render();
+}
+
+function buildBrandTabs(){
+  const w=document.createElement("div"); w.className="brand-tabs";
+  BRANDS.forEach(b=>{
+    const btn=document.createElement("button"); btn.textContent=b.name;
+    btn.style.cssText=b.id===activeBrand?S.bA:S.bB;
+    btn.addEventListener("click",()=>{
+      activeBrand=b.id;
+      w.querySelectorAll("button").forEach(x=>x.style.cssText=S.bB);
+      btn.style.cssText=S.bA;
+      activeObra=obrasFor(b.id)[0]?.code||"";
+      render();
+    });
+    w.appendChild(btn);
+  }); return w;
+}
+
+function buildObraTabs(){
+  const obras=obrasFor(activeBrand);
+  const w=document.createElement("div"); w.className="obra-tabs";
+  obras.forEach(o=>{
+    const isA=o.code===activeObra;
+    const btn=document.createElement("button"); btn.style.cssText=isA?S.oA:S.oB;
+    btn.innerHTML=`<span style="display:block;font-size:13px;font-weight:600;color:${isA?'#fff':'#222'};">${o.site}</span><span style="display:block;font-size:10px;font-family:monospace;color:${isA?'rgba(255,255,255,0.6)':'#999'};margin-top:2px;">${o.code}</span>`;
+    btn.addEventListener("click",()=>{
+      activeObra=o.code;
+      w.querySelectorAll("button").forEach(x=>{
+        x.style.cssText=S.oB;
+        x.querySelectorAll("span")[0].style.color="#222";
+        x.querySelectorAll("span")[1].style.color="#999";
+      });
+      btn.style.cssText=S.oA;
+      btn.querySelectorAll("span")[0].style.color="#fff";
+      btn.querySelectorAll("span")[1].style.color="rgba(255,255,255,0.6)";
+      render();
+    });
+    w.appendChild(btn);
+  }); return w;
+}
+
+function obrasFor(b){return DB.obras.filter(o=>o.brand===b);}
+function obraInfo(c){return DB.obras.find(o=>o.code===c);}
+function today(){return new Date().toISOString().split('T')[0];}
+
+function si(o){
+  if(o.dest==="warehouse") return {pending:{cls:"bp",l:"Pending"},warehouse:{cls:"bwh",l:"At Warehouse"},sent:{cls:"bst",l:"Dispatched"},received:{cls:"bdn",l:"Received"},issue:{cls:"bi",l:"Issue"}}[o.status]||{cls:"bp",l:o.status};
+  return {pending:{cls:"bp",l:"Pending"},received:{cls:"br",l:"Received"},issue:{cls:"bi",l:"Issue"},partial:{cls:"bpa",l:"Partial"}}[o.status]||{cls:"bp",l:o.status};
+}
+function badge(o){const s=si(o);return `<span class="badge ${s.cls}">${s.l}</span>`;}
+function destB(d){return d==="warehouse"?`<span class="db dw">🏭 Via Warehouse</span>`:`<span class="db do">📦 Direct to Site</span>`;}
+
+function esSel(o){
+  const iw=o.dest==="warehouse";
+  const opts=iw?["pending","warehouse","sent","received","issue"]:["pending","received","partial","issue"];
+  const lbls={pending:"Pending",received:"Received",partial:"Partial",issue:"Issue",warehouse:"At Warehouse",sent:"Dispatched"};
+  return `<select class="sel-c" onchange="updS('${o.uid}',this.value)">${opts.map(s=>`<option value="${s}"${o.status===s?" selected":""}>${lbls[s]}</option>`).join('')}</select>`;
+}
+function ecSel(o){
+  return `<select class="sel-c" onchange="updC('${o.uid}',this.value)">
+    <option value=""${!o.condition?" selected":""}>—</option>
+    <option value="good"${o.condition==="good"?" selected":""}>Good</option>
+    <option value="damaged"${o.condition==="damaged"?" selected":""}>Damaged</option>
+    <option value="missing"${o.condition==="missing"?" selected":""}>Missing</option>
+  </select>`;
+}
+function updS(uid,val){const o=DB.orders.find(x=>x.uid===uid);if(!o)return;o.status=val;if(val==="received"&&!o.received)o.received=today();if(val==="warehouse"&&!o.whReceived)o.whReceived=today();if(val==="sent"&&!o.whSent)o.whSent=today();render();}
+function updC(uid,val){const o=DB.orders.find(x=>x.uid===uid);if(o){o.condition=val;render();}}
+
+function statsH(orders){
+  const t=orders.length,p=orders.filter(o=>o.status==="pending").length,r=orders.filter(o=>o.status==="received").length,i=orders.filter(o=>o.status==="issue"||o.status==="partial").length;
+  return `<div class="stats-row"><div class="stat t"><div class="stat-label">Total</div><div class="stat-val ny">${t}</div></div><div class="stat p"><div class="stat-label">Pending</div><div class="stat-val wn">${p}</div></div><div class="stat r"><div class="stat-label">Received</div><div class="stat-val ok">${r}</div></div><div class="stat i"><div class="stat-label">Issues</div><div class="stat-val er">${i}</div></div></div>`;
+}
+
+function render(){
+  const m=document.getElementById("main"); m.innerHTML="";
+  if(role==="office") rOffice(m);
+  else if(role==="site") rSite(m);
+  else if(role==="warehouse") rWh(m);
+  else rObras(m);
+}
+
+// ── OFFICE ────────────────────────────────────────────────────────────────────
+function rOffice(m){
+  m.insertAdjacentHTML("beforeend",`<div class="sec">Brand</div>`);
+  m.appendChild(buildBrandTabs());
+  const ab=DB.orders.filter(o=>obraInfo(o.obra)?.brand===activeBrand);
+  m.insertAdjacentHTML("beforeend",statsH(ab));
+  m.insertAdjacentHTML("beforeend",`<div class="sec">Site</div>`);
+  m.appendChild(buildObraTabs());
+  const oo=DB.orders.filter(o=>o.obra===activeObra);
+  const inf=obraInfo(activeObra);
+  m.insertAdjacentHTML("beforeend",`<div class="top-row"><div style="font-size:13px;"><strong style="color:#1C3F5E">${inf?.site||''}</strong><span class="pill" style="margin-left:8px">${activeObra}</span><span style="color:#aaa;margin-left:8px;font-size:12px">${oo.length} order${oo.length!==1?'s':''}</span></div><div style="display:flex;gap:8px;"><button class="btn" onclick="showUpload()">📂 Import</button><button class="btn btn-navy" onclick="showAdd()">+ New</button></div></div>`);
+  const wrap=document.createElement("div"); wrap.className="tbl-wrap";
+  wrap.innerHTML=`<table class="tbl"><colgroup><col style="width:80px"><col style="width:90px"><col style="width:100px"><col><col style="width:80px"><col style="width:85px"><col style="width:65px"><col style="width:80px"></colgroup>
+  <thead><tr><th>Order No.</th><th>Delivery</th><th>Supplier</th><th>Product</th><th>Est. Del.</th><th>Status</th><th>Condition</th><th>Notes</th></tr></thead>
+  <tbody>${oo.length===0?`<tr><td colspan="8" style="text-align:center;padding:28px;color:#aaa;">No orders for this site</td></tr>`:oo.map(o=>`<tr><td class="nw" style="font-weight:600;color:#1C3F5E;">${o.id}</td><td class="nw">${destB(o.dest)}</td><td class="nw" style="color:#555;">${o.supplier}</td><td class="wr">${o.product}</td><td class="nw" style="color:#555;">${o.eta}</td><td class="nw">${esSel(o)}</td><td class="nw">${ecSel(o)}</td><td class="nw" style="font-size:11px;color:#999;">${o.notes||'—'}</td></tr>`).join('')}</tbody></table>`;
+  m.appendChild(wrap);
+}
+
+// ── SITE VIEW ─────────────────────────────────────────────────────────────────
+function rSite(m){
+  m.insertAdjacentHTML("beforeend",`<div class="sec">Brand</div>`);
+  m.appendChild(buildBrandTabs());
+  m.insertAdjacentHTML("beforeend",`<div class="sec">Site</div>`);
+  m.appendChild(buildObraTabs());
+  const inf=obraInfo(activeObra);
+  const pend=DB.orders.filter(o=>o.obra===activeObra&&((o.dest==="site"&&(o.status==="pending"||o.status==="partial"))||(o.dest==="warehouse"&&o.status==="sent")));
+  const done=DB.orders.filter(o=>o.obra===activeObra&&(o.status==="received"||o.status==="issue"));
+  m.insertAdjacentHTML("beforeend",`<div style="margin-bottom:14px;padding:12px 14px;background:#fff;border-radius:10px;border:1px solid #E8ECF0;"><strong style="color:#1C3F5E;font-size:15px">${inf?.site||''}</strong><br><span class="pill" style="margin-top:4px;display:inline-block">${activeObra}</span></div>`);
+  m.insertAdjacentHTML("beforeend",`<div class="sec">Awaiting Receipt (${pend.length})</div>`);
+  if(!pend.length){m.insertAdjacentHTML("beforeend",`<div class="empty">✅ No pending deliveries for this site</div>`);}
+  else pend.forEach(o=>{
+    const fw=o.dest==="warehouse";
+    m.insertAdjacentHTML("beforeend",`<div class="card ${fw?'wc':'scc'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;padding-right:8px;"><div class="ct">${o.product}</div><div class="cm">${o.id} · ${o.supplier}<br>Est: ${o.eta}${fw?` · <strong style="color:#6D28D9">From warehouse</strong>`:''}</div></div>
+        ${badge(o)}
+      </div>
+      <div class="ca">
+        <div class="cg"><input type="checkbox" id="ck-${o.uid}" onchange="tmp('${o.uid}','complete',this.checked)"><label for="ck-${o.uid}" style="font-size:14px">Delivery complete</label></div>
+        <select class="sel-std" onchange="tmp('${o.uid}','condition',this.value)"><option value="">Material condition…</option><option value="good">Good condition</option><option value="damaged">Damaged</option><option value="missing">Missing items</option></select>
+        <input type="text" class="text-in" placeholder="Notes..." onchange="tmp('${o.uid}','notes',this.value)">
+        <button class="btn btn-navy" onclick="confSite('${o.uid}')">✅ Confirm Receipt</button>
+      </div>
+    </div>`);
+  });
+  if(done.length){
+    m.insertAdjacentHTML("beforeend",`<div class="sec" style="margin-top:16px">Confirmed — Editable (${done.length})</div>`);
+    done.forEach(o=>{m.insertAdjacentHTML("beforeend",`<div class="card done">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;padding-right:8px;"><div class="ct">${o.product}</div><div class="cm">${o.id} · ${o.supplier} · Received: ${o.received||'—'}</div></div>
+        ${badge(o)}
+      </div>
+      <div class="ca">
+        <div class="cg"><label style="font-size:12px">Status:</label>${esSel(o)}</div>
+        <div class="cg"><label style="font-size:12px">Condition:</label>${ecSel(o)}</div>
+        <button class="btn btn-sm" onclick="editN('${o.uid}')" style="margin-left:auto">✏️ Notes</button>
+      </div>
+      ${o.notes?`<div style="font-size:12px;color:#aaa;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0">${o.notes}</div>`:''}
+    </div>`);});
+  }
+}
+
+// ── WAREHOUSE ─────────────────────────────────────────────────────────────────
+function rWh(m){
+  const wh=DB.orders.filter(o=>o.dest==="warehouse");
+  const pend=wh.filter(o=>o.status==="pending");
+  const inWh=wh.filter(o=>o.status==="warehouse");
+  const sent=wh.filter(o=>o.status==="sent");
+  const done=wh.filter(o=>o.status==="received"||o.status==="issue");
+  m.insertAdjacentHTML("beforeend",`<div class="wb"><strong>Warehouse View</strong> — all orders routed via the company warehouse.</div>`);
+  function whCard(o,actions){const inf=obraInfo(o.obra);return `<div class="card wc"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div style="flex:1;min-width:0;padding-right:8px;"><div class="ct">${o.product}</div><div class="cm">${o.id} · ${o.supplier}<br><strong style="color:#1C3F5E">${inf?.site||o.obra}</strong> <span class="pill">${o.obra}</span><br>Est: ${o.eta}</div></div>${badge(o)}</div>${actions}</div>`;}
+  m.insertAdjacentHTML("beforeend",`<div class="sec">⏳ Awaiting Arrival (${pend.length})</div>`);
+  if(!pend.length) m.insertAdjacentHTML("beforeend",`<div class="empty">Nothing awaiting arrival</div>`);
+  pend.forEach(o=>m.insertAdjacentHTML("beforeend",whCard(o,`<div class="ca"><input type="text" class="text-in" placeholder="Notes..." onchange="tmp('${o.uid}','notes',this.value)"><button class="btn btn-purple" onclick="confWh('${o.uid}')">Confirm Arrival</button></div>`)));
+  m.insertAdjacentHTML("beforeend",`<div class="sec" style="margin-top:16px">📦 In Warehouse (${inWh.length})</div>`);
+  if(!inWh.length) m.insertAdjacentHTML("beforeend",`<div class="empty">Nothing awaiting dispatch</div>`);
+  inWh.forEach(o=>m.insertAdjacentHTML("beforeend",whCard(o,`<div class="ca"><span style="font-size:12px;color:#888">Arrived: ${o.whReceived}</span><input type="text" class="text-in" placeholder="Dispatch notes..." onchange="tmp('${o.uid}','notes',this.value)"><button class="btn btn-teal" onclick="sendS('${o.uid}')">Dispatch to Site →</button></div>`)));
+  m.insertAdjacentHTML("beforeend",`<div class="sec" style="margin-top:16px">🚚 Dispatched — Awaiting Confirmation (${sent.length})</div>`);
+  if(!sent.length) m.insertAdjacentHTML("beforeend",`<div class="empty">Nothing awaiting confirmation</div>`);
+  sent.forEach(o=>m.insertAdjacentHTML("beforeend",whCard(o,`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #F0F0F0;font-size:12px;color:#888">Arrived: ${o.whReceived} · Dispatched: ${o.whSent} · Awaiting site confirmation</div>`)));
+  if(done.length){
+    m.insertAdjacentHTML("beforeend",`<div class="sec" style="margin-top:16px">✅ Completed — Editable (${done.length})</div>`);
+    done.forEach(o=>m.insertAdjacentHTML("beforeend",whCard(o,`<div class="ca"><div class="cg"><label style="font-size:12px">Status:</label>${esSel(o)}</div><div class="cg"><label style="font-size:12px">Condition:</label>${ecSel(o)}</div></div>`)));
+  }
+}
+
+// ── SITE MANAGEMENT ───────────────────────────────────────────────────────────
+function rObras(m){
+  const tabs=document.createElement("div"); tabs.className="subview-tabs";
+  [{id:"list",label:"📋 Registered Sites"},{id:"new",label:"➕ New Site"}].forEach(t=>{
+    const btn=document.createElement("button"); btn.textContent=t.label;
+    btn.className="sv-tab"+(t.id===obrasView?" act":"");
+    btn.addEventListener("click",()=>{obrasView=t.id;render();});
+    tabs.appendChild(btn);
+  }); m.appendChild(tabs);
+  if(obrasView==="list") rObrasList(m); else rObrasNew(m);
+}
+function rObrasList(m){
+  const total=DB.obras.length,active=DB.obras.filter(o=>o.status==="active"||!o.status).length,planned=DB.obras.filter(o=>o.status==="planned").length,closed=DB.obras.filter(o=>o.status==="closed").length;
+  m.insertAdjacentHTML("beforeend",`<div class="stats-row" style="margin-bottom:16px;"><div class="stat t"><div class="stat-label">Total</div><div class="stat-val ny">${total}</div></div><div class="stat r"><div class="stat-label">Active</div><div class="stat-val ok">${active}</div></div><div class="stat p"><div class="stat-label">Planned</div><div class="stat-val wn">${planned}</div></div><div class="stat i"><div class="stat-label">Closed</div><div class="stat-val" style="color:#6B7280">${closed}</div></div></div>`);
+  if(!DB.obras.length){m.insertAdjacentHTML("beforeend",`<div class="empty">No sites registered yet. Use "New Site" to add one.</div>`);return;}
+  BRANDS.forEach(brand=>{
+    const bo=DB.obras.filter(o=>o.brand===brand.id); if(!bo.length)return;
+    m.insertAdjacentHTML("beforeend",`<div class="sec">${brand.name} (${bo.length})</div>`);
+    const grid=document.createElement("div"); grid.className="obras-grid";
+    bo.forEach(o=>{
+      const orders=DB.orders.filter(p=>p.obra===o.code),pend=orders.filter(p=>p.status==="pending").length;
+      const stL={active:"Active",planned:"Planned",closed:"Closed"}[o.status||"active"];
+      const stC={active:"sp-active",planned:"sp-planned",closed:"sp-closed"}[o.status||"active"];
+      const card=document.createElement("div"); card.className="obra-card-g";
+      card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="og-code">${o.code}</div><div class="og-site">${o.site}</div></div><span class="status-pill ${stC}">${stL}</span></div><div class="og-meta">${orders.length} order${orders.length!==1?'s':''}${pend>0?` · <strong style="color:#D97706">${pend} pending</strong>`:''}</div><div class="og-actions"><select class="sel-std" onchange="changeObraStatus('${o.code}',this.value)" style="flex:1;font-size:12px;padding:6px 8px;"><option value="active" ${(o.status||"active")==="active"?"selected":""}>Active</option><option value="planned" ${(o.status||"")==="planned"?"selected":""}>Planned</option><option value="closed" ${(o.status||"")==="closed"?"selected":""}>Closed</option></select><button class="btn btn-danger btn-sm" onclick="deleteObra('${o.code}')">🗑️ Delete</button></div>`;
+      grid.appendChild(card);
+    }); m.appendChild(grid);
+  });
+}
+function rObrasNew(m){
+  const year=new Date().getFullYear().toString().slice(-2);
+  const bOpts=BRANDS.map(b=>`<option value="${b.id}">${b.name} (${b.id})</option>`).join('');
+  m.insertAdjacentHTML("beforeend",`<div><div class="ib" style="margin-bottom:16px;"><strong>Code format:</strong> FI.[BRAND].[YY].[NN]<br>Example: <strong>FI.ZAR.${year}.01</strong> = ZARA · 20${year} · Site 01</div>
+  <div class="fg"><label class="fl">Brand</label><select class="fi" id="nob-brand" onchange="updObraCode()">${bOpts}</select></div>
+  <div class="fg"><label class="fl">Site Name / Location</label><input class="fi" id="nob-site" placeholder="e.g. Oxford Street, London" oninput="updObraCode()"></div>
+  <div class="fg"><label class="fl">Site Number</label><input class="fi" id="nob-num" type="number" min="1" max="99" value="1" oninput="updObraCode()"></div>
+  <div class="fg"><label class="fl">Status</label><select class="fi" id="nob-status"><option value="active">Active</option><option value="planned">Planned</option></select></div>
+  <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:16px;"><div style="font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Generated Code</div><div id="nob-preview" style="font-family:monospace;font-size:20px;font-weight:700;color:#1C3F5E;">FI.ZAR.${year}.01</div></div>
+  <div style="display:flex;gap:10px;"><button class="btn" style="flex:1" onclick="obrasView='list';render()">Cancel</button><button class="btn btn-navy" style="flex:1" onclick="saveNewObra()">Register Site</button></div></div>`);
+}
+function updObraCode(){
+  const b=document.getElementById("nob-brand")?.value||"ZAR";
+  const n=String(document.getElementById("nob-num")?.value||1).padStart(2,"0");
+  const y=new Date().getFullYear().toString().slice(-2);
+  const p=document.getElementById("nob-preview");
+  if(p)p.textContent=`FI.${b}.${y}.${n}`;
+}
+function saveNewObra(){
+  const brand=document.getElementById("nob-brand").value;
+  const site=document.getElementById("nob-site").value.trim();
+  const num=String(document.getElementById("nob-num").value||1).padStart(2,"0");
+  const status=document.getElementById("nob-status").value;
+  const year=new Date().getFullYear().toString().slice(-2);
+  const code=`FI.${brand}.${year}.${num}`;
+  if(!site){alert("Please enter a site name");return;}
+  if(DB.obras.find(o=>o.code===code)){alert(`Code ${code} already exists`);return;}
+  DB.obras.push({code,brand,site,status}); obrasView="list"; render();
+}
+function changeObraStatus(code,status){const o=DB.obras.find(x=>x.code===code);if(o){o.status=status;render();}}
+function deleteObra(code){
+  const o=DB.obras.find(x=>x.code===code);
+  const n=DB.orders.filter(p=>p.obra===code).length;
+  if(!confirm(`Delete site ${code} — ${o?.site}?${n>0?`\n\n⚠️ ${n} order${n!==1?'s':''} will also be deleted.`:''}`))return;
+  DB.obras=DB.obras.filter(x=>x.code!==code);
+  DB.orders=DB.orders.filter(x=>x.obra!==code);
+  if(activeObra===code){const r=obrasFor(activeBrand);activeObra=r.length?r[0].code:"";}
+  render();
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+const T={};
+function tmp(uid,f,v){if(!T[uid])T[uid]={};T[uid][f]=v;}
+function confSite(uid){
+  const o=DB.orders.find(x=>x.uid===uid);if(!o)return;const u=T[uid]||{};
+  o.received=today();o.complete=u.complete||false;o.condition=u.condition||"good";if(u.notes)o.notes=u.notes;
+  o.status=(!o.complete||o.condition==="damaged"||o.condition==="missing")?(o.condition==="damaged"?"issue":"partial"):"received";
+  delete T[uid];render();
+}
+function confWh(uid){const o=DB.orders.find(x=>x.uid===uid);if(!o)return;const u=T[uid]||{};o.whReceived=today();o.status="warehouse";if(u.notes)o.notes=u.notes;delete T[uid];render();}
+function sendS(uid){const o=DB.orders.find(x=>x.uid===uid);if(!o)return;const u=T[uid]||{};o.whSent=today();o.status="sent";if(u.notes)o.notes=u.notes;delete T[uid];render();}
+function editN(uid){const o=DB.orders.find(x=>x.uid===uid);if(!o)return;const n=prompt("Edit notes:",o.notes||"");if(n!==null){o.notes=n;render();}}
+
+// ── IMPORT ────────────────────────────────────────────────────────────────────
+function showUpload(){
+  document.getElementById("modal").innerHTML=`
+    <div class="modal-bg" onclick="closeM(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📂 Import Excel File</div>
+        <div class="ib">One file per import. The app reads the <strong>Site Code</strong> column to assign orders. Existing orders are preserved.</div>
+        <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this.files[0])">
+          <div style="font-size:40px;margin-bottom:10px">📂</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Tap to browse or drag file here</div>
+          <div style="font-size:12px;color:#aaa">.xlsx · .xls · .csv</div>
+        </div>
+        <div id="importResult"></div>
+        <div class="ma"><button class="btn" onclick="closeM()" style="flex:1;padding:14px">Close</button></div>
+      </div>
+    </div>`;
+  setTimeout(()=>{
+    const zone=document.getElementById("dropZone");if(!zone)return;
+    zone.addEventListener("dragover",e=>{e.preventDefault();zone.style.background="#EFF6FF";});
+    zone.addEventListener("dragleave",()=>{zone.style.background="";});
+    zone.addEventListener("drop",e=>{e.preventDefault();zone.style.background="";const f=e.dataTransfer.files[0];if(f)handleFile(f);});
+  },100);
+}
+
+function handleFile(file){
+  if(!file)return;
+  const d=document.getElementById("importResult");
+  if(d)d.innerHTML=`<div style="text-align:center;padding:16px;color:#888">Reading file…</div>`;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:"array",cellDates:true});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const range=XLSX.utils.decode_range(sheet["!ref"]||"A1:Z100");
+      let headerRow=0;
+      for(let r=range.s.r;r<=Math.min(range.e.r,10);r++){
+        for(let c=range.s.c;c<=range.e.c;c++){
+          const cell=sheet[XLSX.utils.encode_cell({r,c})];
+          if(cell&&cell.v){const v=String(cell.v).toUpperCase();if(v.includes("ORDER")||v.includes("SITE CODE")||v.includes("SUPPLIER")){headerRow=r;break;}}
+        }if(headerRow)break;
+      }
+      const rows=XLSX.utils.sheet_to_json(sheet,{defval:"",header:1,range:headerRow});
+      if(rows.length<2){showImportResult([],[],["File appears to be empty."]);return;}
+      const headers=rows[0].map(h=>String(h||"").trim().toUpperCase());
+      let dataStartIdx=1;
+      if(rows[1]){const fv=String(rows[1][0]||"").toLowerCase();if(fv.includes("e.g")||fv.includes("example")||fv==="")dataStartIdx=2;}
+      const idx={};
+      headers.forEach((h,i)=>{
+        const n=h.replace(/[^A-Z0-9]/g,"");
+        if(n.includes("ORDER")||n.includes("PEDIDO"))idx.id=i;
+        else if(n.includes("SITECODE")||n.includes("OBRA")||h==="SITE CODE")idx.obra=i;
+        else if(n.includes("SUPPLIER")||n.includes("PROVEEDOR"))idx.supplier=i;
+        else if(n.includes("PRODUCT")||n.includes("MATERIAL")||n.includes("DESCRIPTION"))idx.product=i;
+        else if((n.includes("EST")&&n.includes("DELIVERY"))||(n.includes("DELIVERY")&&n.includes("DATE"))||n.includes("FECHA"))idx.eta=i;
+        else if(n.includes("ROUTE")||n.includes("DESTINO")||n.includes("DEST"))idx.dest=i;
+      });
+      const missing=[];
+      if(idx.id===undefined)missing.push("ORDER NO.");if(idx.obra===undefined)missing.push("SITE CODE");
+      if(idx.supplier===undefined)missing.push("SUPPLIER");if(idx.product===undefined)missing.push("PRODUCT");
+      if(idx.eta===undefined)missing.push("EST. DELIVERY DATE");
+      if(missing.length){showImportResult([],[],[`Columns not found: ${missing.join(", ")}. Found: ${headers.filter(h=>h).join(", ")}`]);return;}
+      const added=[],skipped=[],errors=[];
+      rows.slice(dataStartIdx).forEach((row,i)=>{
+        const rn=dataStartIdx+i+headerRow+2;
+        const id=String(row[idx.id]||"").trim();
+        const obraCode=String(row[idx.obra]||"").trim();
+        const supplier=String(row[idx.supplier]||"").trim();
+        const product=String(row[idx.product]||"").trim();
+        const destRaw=String(row[idx.dest]||"").trim().toLowerCase();
+        let eta="";
+        const rawEta=row[idx.eta];
+        if(rawEta instanceof Date)eta=rawEta.toISOString().split("T")[0];
+        else if(typeof rawEta==="number"){const d=XLSX.SSF.parse_date_code(rawEta);if(d)eta=`${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`;}
+        else if(rawEta){const p=new Date(rawEta);eta=isNaN(p)?String(rawEta).trim():p.toISOString().split("T")[0];}
+        if(!id&&!obraCode&&!supplier&&!product)return;
+        if(!id){errors.push(`Row ${rn}: missing Order No.`);return;}
+        if(!obraCode){errors.push(`Row ${rn} (${id}): missing Site Code`);return;}
+        if(!supplier){errors.push(`Row ${rn} (${id}): missing Supplier`);return;}
+        if(!product){errors.push(`Row ${rn} (${id}): missing Product`);return;}
+        if(!eta){errors.push(`Row ${rn} (${id}): missing Delivery Date`);return;}
+        if(DB.orders.find(x=>x.id===id&&x.obra===obraCode)){skipped.push(`${obraCode}/${id}`);return;}
+        if(!DB.obras.find(o=>o.code===obraCode)){const parts=obraCode.split(".");const brand=parts.length>=2?parts[1]:"ZAR";DB.obras.push({code:obraCode,brand,site:obraCode,status:"active"});}
+        const dest=(destRaw.includes("warehouse")||destRaw.includes("almacen"))?"warehouse":"site";
+        DB.orders.push({uid:`${obraCode}::${id}`,id,obra:obraCode,supplier,product,eta,dest,status:"pending",whReceived:null,whSent:null,received:null,complete:null,condition:null,notes:""});
+        added.push(`${obraCode}/${id}`);
+      });
+      showImportResult(added,skipped,errors);
+      if(added.length){const[ao]=added[0].split("/");const inf=DB.obras.find(x=>x.code===ao.trim());if(inf){activeBrand=inf.brand;activeObra=inf.code;}render();}
+    }catch(err){const d=document.getElementById("importResult");if(d)d.innerHTML=`<div style="background:#FEE2E2;color:#991B1B;border-radius:8px;padding:12px;margin-top:8px">Error: ${err.message}</div>`;}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showImportResult(added,skipped,errors){
+  const d=document.getElementById("importResult");if(!d)return;
+  let html="";
+  if(added.length)html+=`<div style="background:#D1FAE5;color:#065F46;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px">✅ <strong>${added.length}</strong> new order${added.length!==1?'s':''} imported</div>`;
+  if(skipped.length)html+=`<div style="background:#FEF3C7;color:#92400E;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:13px">⏭️ <strong>${skipped.length}</strong> already existed (preserved)</div>`;
+  if(errors.length)html+=`<div style="background:#FEE2E2;color:#991B1B;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:12px">⚠️ <strong>${errors.length}</strong> row${errors.length!==1?'s':''} skipped:<br>${errors.slice(0,5).map(e=>`· ${e}`).join("<br>")}${errors.length>5?`<br>· … and ${errors.length-5} more`:''}</div>`;
+  if(!added.length&&!skipped.length&&!errors.length)html=`<div style="background:#FEF3C7;color:#92400E;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px">No data rows found.</div>`;
+  d.innerHTML=html;
+}
+
+// ── NEW ORDER MODAL ───────────────────────────────────────────────────────────
+function showAdd(){
+  const bO=BRANDS.map(b=>`<option value="${b.id}"${b.id===activeBrand?" selected":""}>${b.name}</option>`).join('');
+  const oO=obrasFor(activeBrand).map(o=>`<option value="${o.code}"${o.code===activeObra?" selected":""}>${o.site} (${o.code})</option>`).join('');
+  document.getElementById("modal").innerHTML=`
+    <div class="modal-bg" onclick="closeM(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">New Order</div>
+        <div class="fr">
+          <div class="fg"><label class="fl">Order No.</label><input class="fi" id="fi" placeholder="PED-001"></div>
+          <div class="fg"><label class="fl">Brand</label><select class="fi" id="fb" onchange="rO2()">${bO}</select></div>
+        </div>
+        <div class="fg"><label class="fl">Site</label><select class="fi" id="fo">${oO}</select></div>
+        <div class="fg"><label class="fl">Delivery Route</label>
+          <div class="dtog">
+            <div class="dopt so" id="dO" onclick="selD('site')">📦 Direct to Site</div>
+            <div class="dopt" id="dW" onclick="selD('warehouse')">🏭 Via Warehouse</div>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Supplier</label><input class="fi" id="fp" placeholder="Supplier name"></div>
+        <div class="fg"><label class="fl">Product / Material</label><input class="fi" id="fd" placeholder="Description"></div>
+        <div class="fg"><label class="fl">Estimated Delivery Date</label><input type="date" class="fi" id="fe"></div>
+        <div class="ma">
+          <button class="btn" onclick="closeM()">Cancel</button>
+          <button class="btn btn-navy" onclick="saveOrder()">Save Order</button>
+        </div>
+      </div>
+    </div>`;
+  window._dest="site";
+}
+function selD(d){window._dest=d;document.getElementById("dO").className="dopt"+(d==="site"?" so":"");document.getElementById("dW").className="dopt"+(d==="warehouse"?" sw":"");}
+function rO2(){const b=document.getElementById("fb").value;document.getElementById("fo").innerHTML=obrasFor(b).map(o=>`<option value="${o.code}">${o.site} (${o.code})</option>`).join('');}
+function saveOrder(){
+  const obra=document.getElementById("fo").value;
+  const id=document.getElementById("fi").value||`PED-${String(DB.orders.filter(x=>x.obra===obra).length+1).padStart(3,'0')}`;
+  const uid=`${obra}::${id}`;
+  const o={uid,id,obra,supplier:document.getElementById("fp").value,product:document.getElementById("fd").value,eta:document.getElementById("fe").value,dest:window._dest||"site",status:"pending",whReceived:null,whSent:null,received:null,complete:null,condition:null,notes:""};
+  if(!o.supplier||!o.product||!o.eta){alert("Please fill in all fields");return;}
+  if(DB.orders.find(x=>x.uid===uid)){alert(`Order ${id} already exists for this site`);return;}
+  DB.orders.push(o);const ob=obraInfo(o.obra);if(ob){activeBrand=ob.brand;activeObra=o.obra;}closeM();render();
+}
+function closeM(e){if(e&&e.target!==e.currentTarget)return;document.getElementById("modal").innerHTML="";}
+
+// ── GOOGLE SHEETS SYNC ────────────────────────────────────────────────────────
+const GS_URL = "https://script.google.com/macros/s/AKfycbzM-g9QnlKZ6lwPNKY3Ebmpi3YTMzA53GuNt7OXvnixfw7uXgsWXLbuTRCnCINApFpq/exec";
+let syncTimeout = null;
+
+// Show sync status in topbar
+function setSyncStatus(state) {
+  let el = document.getElementById("syncStatus");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "syncStatus";
+    el.style.cssText = "font-size:10px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:4px;";
+    document.querySelector(".topbar").appendChild(el);
+  }
+  const states = {
+    loading: "⏳ Loading…",
+    saving:  "💾 Saving…",
+    saved:   "✅ Saved",
+    offline: "📵 Offline",
+    error:   "⚠️ Sync error"
+  };
+  el.textContent = states[state] || "";
+}
+
+// Load data from Google Sheets on startup
+async function loadFromSheets() {
+  setSyncStatus("loading");
+  try {
+    const res = await fetch(GS_URL + "?t=" + Date.now());
+    const text = await res.text();
+    if(text && text !== "{}") {
+      const saved = JSON.parse(text);
+      if(saved.obras && saved.obras.length)  DB.obras  = saved.obras;
+      if(saved.orders && saved.orders.length) DB.orders = saved.orders;
+    }
+    setSyncStatus("saved");
+  } catch(err) {
+    setSyncStatus("offline");
+    console.warn("Could not load from Sheets, using local data:", err);
+  }
+  render();
+}
+
+// Save data to Google Sheets (debounced — waits 1.5s after last change)
+function saveToSheets() {
+  setSyncStatus("saving");
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    try {
+      await fetch(GS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          action: "save",
+          payload: { obras: DB.obras, orders: DB.orders }
+        })
+      });
+      setSyncStatus("saved");
+    } catch(err) {
+      setSyncStatus("error");
+    }
+  }, 1500);
+}
+
+// Hook saveToSheets into all data-changing actions
+const _origUpdS = updS;
+window.updS = function(uid,val){ _origUpdS(uid,val); saveToSheets(); };
+const _origUpdC = updC;
+window.updC = function(uid,val){ _origUpdC(uid,val); saveToSheets(); };
+const _origConfSite = confSite;
+window.confSite = function(uid){ _origConfSite(uid); saveToSheets(); };
+const _origConfWh = confWh;
+window.confWh = function(uid){ _origConfWh(uid); saveToSheets(); };
+const _origSendS = sendS;
+window.sendS = function(uid){ _origSendS(uid); saveToSheets(); };
+const _origSaveOrder = saveOrder;
+window.saveOrder = function(){ _origSaveOrder(); saveToSheets(); };
+const _origSaveNewObra = saveNewObra;
+window.saveNewObra = function(){ _origSaveNewObra(); saveToSheets(); };
+const _origChangeObraStatus = changeObraStatus;
+window.changeObraStatus = function(code,status){ _origChangeObraStatus(code,status); saveToSheets(); };
+const _origDeleteObra = deleteObra;
+window.deleteObra = function(code){ _origDeleteObra(code); saveToSheets(); };
+const _origEditN = editN;
+window.editN = function(uid){
+  const o=DB.orders.find(x=>x.uid===uid); if(!o)return;
+  const n=prompt("Edit notes:",o.notes||"");
+  if(n!==null){ o.notes=n; render(); saveToSheets(); }
+};
+
+// Also save after Excel import
+const _origShowImportResult = showImportResult;
+window.showImportResult = function(added, skipped, errors) {
+  _origShowImportResult(added, skipped, errors);
+  if(added.length) saveToSheets();
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+buildNav();
+loadFromSheets(); // Load from Google Sheets first, then render
+
+// Service Worker for offline use
+if('serviceWorker' in navigator){
+  const sw=`
+    const CACHE='fi-tracker-v2';
+    const URLS=['${location.href}','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
+    self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS).catch(()=>{}))));
+    self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('${location.href}')))));
+  `;
+  const blob=new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
